@@ -13,6 +13,6 @@ class ResourceManager:
 		return self.resources[media_item.GetMediaId()]
 
 	def _load_resource(self, media_item):
-		resource = FFMPEGResource(media_item.GetClipProperty("File Path"))
+		resource = FFMPEGResource(media_item)
 
 		return resource
