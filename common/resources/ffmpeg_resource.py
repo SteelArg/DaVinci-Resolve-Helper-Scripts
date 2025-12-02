@@ -13,8 +13,6 @@ class FFMPEGResource(AudioResource):
 
 	def get_volume(self, time_position):
 		try:
-			print("fasd")
-			print(self.file_path)
 			process = ffmpeg.input(self.file_path, ss=time_position, t=self.frame_duration).audio.filter(
 				'astats', metadata=1
 			).filter(

@@ -17,6 +17,7 @@ class Cutter(ResolveCommand):
 	# Returns a list of two splitted items or a list of two lists if items were linked
 
 	def cut(self, item, split_position):
+		print("cut")
 		
 		# Wrapper around __cut_internal() to handle linked items
 
