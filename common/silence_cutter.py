@@ -1,9 +1,9 @@
-from common.logs import log_item
+from common.logs import log_item, LogTimer
 from common.resolve_command import ResolveCommand
 from common.cutter import Cutter
 
 
-interval = 2.0
+interval = 6.0
 threshold = -35.0
 
 class SilenceCutter(ResolveCommand):
@@ -15,18 +15,25 @@ class SilenceCutter(ResolveCommand):
 		self.resource_manager = resource_manager
 
 	def cut_silence(self, item):
+		total_log_timer = LogTimer("Cut Out Silence")
+		volume_getter_timer = LogTimer("Get Volume")
+
 		# Get volume data
 		volume_data = []
 		duration = item.GetDuration(False)
-		print(duration)
 		position = 0.0
 		while position < duration:
 			volume = self.get_item_volume(item, position)
 			volume_data.append([position, volume])
 
+			volume_getter_timer.timestamp()
+
 			position += interval
 
 		print(volume_data)
+
+		volume_getter_timer.stop()
+		total_log_timer.timestamp()
 
 		# Get cut positions
 		starts_with_silence = False
@@ -44,6 +51,8 @@ class SilenceCutter(ResolveCommand):
 
 		print(cuts)
 
+		total_log_timer.timestamp()
+
 		# Cut and delete
 		offset = item.GetStart(False)
 		new_item = item
@@ -52,9 +61,12 @@ class SilenceCutter(ResolveCommand):
 				continue
 
 			cut_result = self.cutter.cut(new_item, cut + offset)
-			print(cut_result)
 			new_item = cut_result[1]
-			log_item(new_item)
+
+		total_log_timer.stop()
+
+		total_log_timer.log_sections()
+		volume_getter_timer.log_sections()
 
 	def get_item_volume(self, item, local_frame_position):
 		source_frame_position = local_frame_position + item.GetSourceStartFrame()
