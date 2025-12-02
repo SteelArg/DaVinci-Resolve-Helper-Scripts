@@ -64,7 +64,7 @@ class Cutter(ResolveCommand):
 		# Track data
 
 		(track_type, track) = item.GetTrackTypeAndIndex()
-		media_type = utils._track_type_to_media_type(track_type)
+		media_type = utils.track_type_to_media_type(track_type)
 
 		# Delete clip
 		self.timeline.DeleteClips([item])
