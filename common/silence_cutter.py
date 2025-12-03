@@ -1,10 +1,8 @@
 from common.logs import log_item, LogTimer
 from common.resolve_command import ResolveCommand
 from common.cutter import Cutter
+import common.settings as settings
 
-
-interval = 6.0
-threshold = -35.0
 
 class SilenceCutter(ResolveCommand):
 	def __init__(self, resolve, resource_manager):
@@ -13,6 +11,13 @@ class SilenceCutter(ResolveCommand):
 		self.cutter = Cutter(resolve)
 
 		self.resource_manager = resource_manager
+
+		self.set_settings(settings.load_settings(settings.silence_cutter))
+
+	def set_settings(self, data):
+		self.settings = data
+		self.interval = data[settings.silence_cutter_interval]
+		self.threshold = data[settings.silence_cutter_threshold]
 
 	def cut_silence(self, item):
 		total_log_timer = LogTimer("Cut Out Silence")
@@ -28,7 +33,7 @@ class SilenceCutter(ResolveCommand):
 
 			volume_getter_timer.timestamp()
 
-			position += interval
+			position += self.interval
 
 		print(volume_data)
 
@@ -40,7 +45,7 @@ class SilenceCutter(ResolveCommand):
 		prev_silence = True
 		cuts = []
 		for data in volume_data:
-			silence = data[1] < threshold
+			silence = data[1] < self.threshold
 			if silence is not prev_silence:
 				cuts.append(data[0])
 
