@@ -21,4 +21,5 @@ item = items[0]
 media_item = item.GetMediaPoolItem()
 
 # Cut out silence
+silence_cutter.set_settings_from_item(item, )
 silence_cutter.cut_silence(item)

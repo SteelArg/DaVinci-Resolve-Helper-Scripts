@@ -7,7 +7,6 @@ import common.settings as settings
 class SilenceCutter(ResolveCommand):
 	def __init__(self, resolve, resource_manager):
 		super().__init__(resolve)
-		self.media_pool = self.project.GetMediaPool()
 		self.cutter = Cutter(resolve)
 
 		self.resource_manager = resource_manager
@@ -19,9 +18,24 @@ class SilenceCutter(ResolveCommand):
 		self.interval = data[settings.silence_cutter_interval]
 		self.threshold = data[settings.silence_cutter_threshold]
 
+	def set_settings_from_item(self, item, duration=72, threshold_percentage=0.45):
+		resource = self.resource_manager.get_resource(item.GetMediaPoolItem())
+		source_start_frame = item.GetSourceStartFrame()
+		max_volume = -120
+		min_volume = 0
+		
+		for i in range(duration):
+			volume = resource.get_volume(source_start_frame + i)
+			max_volume = max(max_volume, volume)
+			min_volume = min(min_volume, volume)
+
+		self.threshold = max_volume*threshold_percentage + min_volume*(1-threshold_percentage)
+		self.settings[settings.silence_cutter_threshold] = self.threshold
+
+		print(self.threshold)
+
 	def cut_silence(self, item):
 		total_log_timer = LogTimer("Cut Out Silence")
-		volume_getter_timer = LogTimer("Get Volume")
 
 		# Get volume data
 		volume_data = []
@@ -31,11 +45,8 @@ class SilenceCutter(ResolveCommand):
 			volume = self.get_item_volume(item, position)
 			volume_data.append([position, volume])
 
-			volume_getter_timer.timestamp()
-
 			position += self.interval
-
-		volume_getter_timer.stop()
+		
 		total_log_timer.timestamp()
 
 		# Get cut positions
@@ -56,18 +67,31 @@ class SilenceCutter(ResolveCommand):
 
 		# Cut and delete
 		offset = item.GetStart(False)
+		cutted_items = []
 		new_item = item
 		for cut in cuts:
 			if cut == 0.0:
 				continue
 
 			cut_result = self.cutter.cut(new_item, cut + offset)
+			cutted_items.append(cut_result[0])
 			new_item = cut_result[1]
+
+		cutted_items.append(new_item)
+
+		cut_current_item = starts_with_silence
+		items_to_delete = []
+		for cutted_item in cutted_items:
+			if cut_current_item:
+				items_to_delete.append(cutted_item)
+			
+			cut_current_item = not cut_current_item
+
+		self.timeline.DeleteClips(items_to_delete)
 
 		total_log_timer.stop()
 
 		total_log_timer.log_sections()
-		volume_getter_timer.log_sections()
 
 	def get_item_volume(self, item, local_frame_position):
 		source_frame_position = int(local_frame_position + item.GetSourceStartFrame())
@@ -75,3 +99,4 @@ class SilenceCutter(ResolveCommand):
 		resource = self.resource_manager.get_resource(media_item)
 
 		return resource.get_volume(source_frame_position)
+	

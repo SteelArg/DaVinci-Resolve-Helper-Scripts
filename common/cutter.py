@@ -8,19 +8,15 @@ import common.utils as utils
 class Cutter(ResolveCommand):
 	def __init__(self, resolve):
 		super().__init__(resolve)
-		self.media_pool = self.project.GetMediaPool()
-		self.timeline = self.project.GetCurrentTimeline()
 
 		self.item_adder = ItemAdder(resolve)
 
 	# Pass an TimelineItem and an int frame position
 	# Returns a list of two splitted items or a list of two lists if items were linked
 
-	def cut(self, item, split_position):
-		print("cut")
-		
-		# Wrapper around __cut_internal() to handle linked items
+	# Wrapper around __cut_internal() to handle linked items
 
+	def cut(self, item, split_position):
 		linked_items = item.GetLinkedItems()
 		linked_items.append(item)
 

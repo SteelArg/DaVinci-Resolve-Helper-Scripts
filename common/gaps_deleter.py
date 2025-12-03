@@ -9,7 +9,6 @@ from common.logs import *
 class GapsDeleter(ResolveCommand):
 	def __init__(self, resolve):
 		super().__init__(resolve)
-		self.timeline = self.project.GetCurrentTimeline()
 
 		self.item_adder = ItemAdder(resolve)
 
