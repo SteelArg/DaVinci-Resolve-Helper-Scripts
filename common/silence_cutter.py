@@ -26,7 +26,7 @@ class SilenceCutter(ResolveCommand):
 		# Get volume data
 		volume_data = []
 		duration = item.GetDuration(False)
-		position = 0.0
+		position = 0
 		while position < duration:
 			volume = self.get_item_volume(item, position)
 			volume_data.append([position, volume])
@@ -34,8 +34,6 @@ class SilenceCutter(ResolveCommand):
 			volume_getter_timer.timestamp()
 
 			position += self.interval
-
-		print(volume_data)
 
 		volume_getter_timer.stop()
 		total_log_timer.timestamp()
@@ -53,8 +51,6 @@ class SilenceCutter(ResolveCommand):
 				starts_with_silence = silence
 
 			prev_silence = silence
-
-		print(cuts)
 
 		total_log_timer.timestamp()
 
@@ -74,10 +70,8 @@ class SilenceCutter(ResolveCommand):
 		volume_getter_timer.log_sections()
 
 	def get_item_volume(self, item, local_frame_position):
-		source_frame_position = local_frame_position + item.GetSourceStartFrame()
+		source_frame_position = int(local_frame_position + item.GetSourceStartFrame())
 		media_item = item.GetMediaPoolItem()
-		fps = float(media_item.GetClipProperty("FPS"))
-		source_time_position = source_frame_position / fps
-
 		resource = self.resource_manager.get_resource(media_item)
-		return resource.get_volume(source_time_position)
+
+		return resource.get_volume(source_frame_position)

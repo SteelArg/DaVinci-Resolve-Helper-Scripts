@@ -1,41 +1,55 @@
 import ffmpeg
-import re
+import numpy as np
 
 from common.resources.audio_resource import AudioResource
 
 
+frame_size_samples = 1024
+
 class FFMPEGResource(AudioResource):
 	def __init__(self, media_item):
 		self.file_path = media_item.GetClipProperty("File Path")
-		self.frame_rate = media_item.GetClipProperty("FPS")
+		self.frame_rate = float(media_item.GetClipProperty("FPS"))
 		self.frame_duration = 1.0 / self.frame_rate
 
+		self.load_volume_data()
 
-	def get_volume(self, time_position):
-		try:
-			process = ffmpeg.input(self.file_path, ss=time_position, t=self.frame_duration).audio.filter(
-				'astats', metadata=1
-			).filter(
-				'ametadata', mode='print', key='lavfi.astats.Overall.RMS_level'
-			).output(
-				'pipe:', format='null'
-			).run(capture_stdout=True, capture_stderr=True)
+	def load_volume_data(self):
+		sample_rate = 48000
+		chunk_size = int(sample_rate / self.frame_rate)
 
-			stderr_output = process[1].decode('utf-8')
+		process = (
+			ffmpeg
+			.input(self.file_path)
+			.output(
+				'pipe:',
+				format='f32le',
+				ac=1,
+				ar=sample_rate
+			)
+			.run_async(pipe_stdout=True, pipe_stderr=False)
+		)
 
-			# Extract the RMS level from the stderr output
-			match = re.search(r'lavfi\.astats\.Overall\.RMS_level=(-?\d+\.\d+)', stderr_output)
-			if match:
-				rms_level = float(match.group(1))
-				return rms_level
-			else:
-				print(f"Could not find RMS level in FFmpeg output for time {target_time}s.")
-				return None
+		bytes_per_sample = 4
+		bytes_per_chunk = chunk_size * bytes_per_sample
 
-		except ffmpeg.Error as e:
-			print(f"FFmpeg error: {e.stderr.decode('utf-8')}")
-			return None
+		self.volumes = []
 
-		except Exception as e:
-			print(f"An error occurred: {e}")
-			return None
+		while True:
+			buf = process.stdout.read(bytes_per_chunk)
+			if not buf:
+				break
+
+			samples = np.frombuffer(buf, dtype=np.float32)
+			if samples.size == 0:
+				break
+
+			rms = np.sqrt(np.mean(samples**2))
+			db = 20.0 * np.log10(rms)
+
+			self.volumes.append(db)
+
+		process.wait()
+
+	def get_volume(self, frame_position):
+		return self.volumes[frame_position]
