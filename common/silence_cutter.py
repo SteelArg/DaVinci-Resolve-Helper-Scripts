@@ -17,6 +17,8 @@ class SilenceCutter(ResolveCommand):
 		self.settings = data
 		self.interval = data[settings.silence_cutter_interval]
 		self.threshold = data[settings.silence_cutter_threshold]
+		self.silence_enter_span = data[settings.silence_cutter_silence_enter_span]
+		self.silence_exit_span = data[settings.silence_cutter_silence_exit_span]
 
 	def set_settings_from_item(self, item, duration=72, threshold_percentage=0.45):
 		resource = self.resource_manager.get_resource(item.GetMediaPoolItem())
@@ -32,7 +34,7 @@ class SilenceCutter(ResolveCommand):
 		self.threshold = max_volume*threshold_percentage + min_volume*(1-threshold_percentage)
 		self.settings[settings.silence_cutter_threshold] = self.threshold
 
-		print(self.threshold)
+		print(f"Cut Out Silence Threshold: {self.threshold} db")
 
 	def cut_silence(self, item):
 		total_log_timer = LogTimer("Cut Out Silence")
@@ -50,19 +52,31 @@ class SilenceCutter(ResolveCommand):
 		total_log_timer.timestamp()
 
 		# Get cut positions
-		starts_with_silence = False
-		prev_silence = True
+		prev_cut_silence = True
+		last_consideration = 0
+		considering_cut = False
 		cuts = []
 		for data in volume_data:
 			silence = data[1] < self.threshold
-			if silence is not prev_silence:
-				cuts.append(data[0])
+			if (not considering_cut) and silence is not prev_cut_silence:
+				considering_cut = True
+				last_consideration = data[0]
 
-			if data[0] == 0.0:
-				starts_with_silence = silence
+			if considering_cut and silence is prev_cut_silence:
+				considering_cut = False
 
-			prev_silence = silence
+			frames_since_last_consideration = data[0] - last_consideration
+			cut_span = self.silence_enter_span if silence else self.silence_exit_span
 
+			if considering_cut and frames_since_last_consideration >= cut_span:
+				cuts.append(last_consideration)
+				considering_cut = False
+				prev_cut_silence = silence
+
+		starts_with_silence = True
+		if cuts.__len__() > 0 and cuts[0] == 0:
+			starts_with_silence = False
+		
 		total_log_timer.timestamp()
 
 		# Cut and delete

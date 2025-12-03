@@ -1,4 +1,6 @@
 {
     "interval" : 1,
-    "threshold" : -35.0
+    "threshold" : -35.0,
+    "silence_enter_span" : 8,
+    "silence_exit_span" : 2
 }

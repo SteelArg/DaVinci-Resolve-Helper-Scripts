@@ -11,6 +11,8 @@ _settings = "_settings.json"
 silence_cutter = "silence_cutter" + _settings
 silence_cutter_interval = "interval"
 silence_cutter_threshold = "threshold"
+silence_cutter_silence_enter_span = "silence_enter_span"
+silence_cutter_silence_exit_span = "silence_exit_span"
 
 def load_settings(filename):
     filepath = os.path.join(abs_path, filename)
