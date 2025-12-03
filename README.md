@@ -1,4 +1,8 @@
 # Overview
+## Requirements
+* FFMPEG
+* ffmpeg-python
+* numpy
 ## Installation
 Go to your DR `Scripts` folder and copy all the files into `Utility` subfolder.
 The scripts folder location is stated in the official API Docs.
