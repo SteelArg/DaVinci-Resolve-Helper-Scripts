@@ -90,8 +90,8 @@ class SilenceCutter(ResolveCommand):
 				continue
 
 			cut_result = self.cutter.cut(new_item, cut + offset)
-			cutted_items.append(cut_result[0])
-			new_item = cut_result[1]
+			cutted_items.append(cut_result[0][0])
+			new_item = cut_result[1][1]
 
 		cutted_items.append(new_item)
 

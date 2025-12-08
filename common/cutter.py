@@ -1,4 +1,5 @@
 import math
+import copy
 
 from common.resolve_command import ResolveCommand
 from common.item_adder import ItemAdder
@@ -12,32 +13,30 @@ class Cutter(ResolveCommand):
 		self.item_adder = ItemAdder(resolve)
 
 	# Pass an TimelineItem and an int frame position
-	# Returns a list of two splitted items or a list of two lists if items were linked
+	# Returns two lists of splitted items that were linked
 
 	# Wrapper around __cut_internal() to handle linked items
 
-	def cut(self, item, split_position):
-		linked_items = item.GetLinkedItems()
-		linked_items.append(item)
-
-		# No linked items
-
-		if linked_items.__len__() <= 1:
-			return self.__cut_internal(item, split_position)
+	def cut_group(self, items, split_position):
+		linked_items = utils.LinkedItems(items)
+		items = linked_items.all_items
 
 		# Handle linked items
 
-		self.timeline.SetClipsLinked(linked_items, False)
+		linked_items.set_all_items_linked(False)
+
 		left_items = []
 		right_items = []
 
-		for item in linked_items:
+		for item in items:
 			result = self.__cut_internal(item, split_position)
 			left_items.append(result[0])
 			right_items.append(result[1])
 
-		self.timeline.SetClipsLinked(left_items, True)
-		self.timeline.SetClipsLinked(right_items, True)
+		linked_items.set_items(left_items)
+		linked_items.set_all_items_linked(True)
+		linked_items.set_items(right_items)
+		linked_items.set_all_items_linked(True)
 
 		return [left_items, right_items]
 

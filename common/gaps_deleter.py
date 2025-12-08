@@ -16,36 +16,15 @@ class GapsDeleter(ResolveCommand):
 
 		# Wrapper around __delete_gaps_internal() to handle linked items
 
-		linked_item_indexes = []
-		all_items = copy.copy(items)
-		for item in items:
-			item_index = all_items.index(item)
-			
-			item_handled = False
-			for index_group in linked_item_indexes:
-				if item_index in index_group:
-					item_handled
-			if item_handled:
-				continue
+		linked_items = utils.LinkedItems(items)
+		all_items = linked_items.all_items
 
-			linked_index_group = [item_index]
-			for linked_item in item.GetLinkedItems():
-				if linked_item not in all_items:
-					all_items.append(linked_item)
-				linked_index_group.append(all_items.index(linked_item))
-			
-			if (linked_index_group.__len__() > 1):
-				linked_item_indexes.append(linked_index_group)
-
-		print(linked_item_indexes)
-
-		for linked_index_group in linked_item_indexes:
-			self._set_item_indexes_linked(linked_index_group, all_items, False)
+		linked_items.set_all_items_linked(False)
 
 		moved_items = self.__delete_gaps_internal(all_items)
 
-		for linked_index_group in linked_item_indexes:
-			self._set_item_indexes_linked(linked_index_group, moved_items, True)
+		linked_items.set_items(moved_items)
+		linked_items.set_all_items_linked(True)
 
 		return moved_items
 
@@ -56,7 +35,6 @@ class GapsDeleter(ResolveCommand):
 		i = 0
 		for item in items:
 			i += 1
-			print("Item " + str(i))
 
 			location = [item.GetStart(True), item.GetEnd(True)]
 			intersected = False
@@ -71,8 +49,6 @@ class GapsDeleter(ResolveCommand):
 				item_locations.append(location)
 
 		item_locations = sorted(item_locations, key=lambda location: location[0])
-
-		print("locations: " + str(item_locations))
 
 		# No gaps
 		if (item_locations.__len__() < 2):
@@ -98,6 +74,7 @@ class GapsDeleter(ResolveCommand):
 		i = 0
 		for item in items:
 			i += 1
+
 			# Calculate gap distance
 			gap_distance = 0.0
 			for gap in gaps:
@@ -130,13 +107,6 @@ class GapsDeleter(ResolveCommand):
 			moved_items.append(moved_item)
 
 		return moved_items
-
-	def _set_item_indexes_linked(self, index_group, items, value):
-		linked_items = []
-		for index in index_group:
-			linked_items.append(items[index])
-		
-		self.timeline.SetClipsLinked(linked_items, value)
 
 
 	def _are_locations_intersecting(self, a, b):
