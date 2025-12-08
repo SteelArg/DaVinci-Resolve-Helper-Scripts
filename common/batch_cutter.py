@@ -5,7 +5,7 @@ from common.item_adder import ItemAdder
 import common.utils as utils
 
 
-class Cutter(ResolveCommand):
+class BatchCutter(ResolveCommand):
 	def __init__(self, resolve):
 		super().__init__(resolve)
 

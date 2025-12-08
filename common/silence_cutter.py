@@ -3,6 +3,7 @@ import copy
 from common.logs import log_item, LogTimer
 from common.resolve_command import ResolveCommand
 from common.cutter import Cutter
+from common.batch_cutter import BatchCutter
 import common.settings as settings
 
 
@@ -10,6 +11,7 @@ class SilenceCutter(ResolveCommand):
 	def __init__(self, resolve, resource_manager):
 		super().__init__(resolve)
 		self.cutter = Cutter(resolve)
+		self.batch_cutter = BatchCutter(resolve)
 
 		self.resource_manager = resource_manager
 
@@ -81,20 +83,18 @@ class SilenceCutter(ResolveCommand):
 		
 		total_log_timer.timestamp()
 
-		# Cut and delete
+		# Cut
 		offset = item.GetStart(False)
+		offseted_cuts = []
 		cutted_items = []
-		new_item = item
 		for cut in cuts:
 			if cut == 0.0:
 				continue
+			offseted_cuts.append(cut + offset)
+		
+		cutted_items = self.batch_cutter.cut_batch(item, offseted_cuts)
 
-			cut_result = self.cutter.cut(new_item, cut + offset)
-			cutted_items.append(cut_result[0][0])
-			new_item = cut_result[1][1]
-
-		cutted_items.append(new_item)
-
+		# Delete
 		cut_current_item = starts_with_silence
 		items_to_delete = []
 		for cutted_item in copy.copy(cutted_items):
