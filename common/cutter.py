@@ -1,5 +1,4 @@
 import math
-import copy
 
 from common.resolve_command import ResolveCommand
 from common.item_adder import ItemAdder
@@ -16,6 +15,9 @@ class Cutter(ResolveCommand):
 	# Returns two lists of splitted items that were linked
 
 	# Wrapper around __cut_internal() to handle linked items
+
+	def cut(self, item, split_position):
+		return self.cut_group([item], split_position)
 
 	def cut_group(self, items, split_position):
 		linked_items = utils.LinkedItems(items)
