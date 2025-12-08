@@ -1,3 +1,5 @@
+import copy
+
 from common.logs import log_item, LogTimer
 from common.resolve_command import ResolveCommand
 from common.cutter import Cutter
@@ -95,9 +97,10 @@ class SilenceCutter(ResolveCommand):
 
 		cut_current_item = starts_with_silence
 		items_to_delete = []
-		for cutted_item in cutted_items:
+		for cutted_item in copy.copy(cutted_items):
 			if cut_current_item:
 				items_to_delete.append(cutted_item)
+				cutted_items.remove(cutted_item)
 			
 			cut_current_item = not cut_current_item
 
@@ -106,6 +109,8 @@ class SilenceCutter(ResolveCommand):
 		total_log_timer.stop()
 
 		total_log_timer.log_sections()
+
+		return cutted_items
 
 	def get_item_volume(self, item, local_frame_position):
 		source_frame_position = int(local_frame_position + item.GetSourceStartFrame())
