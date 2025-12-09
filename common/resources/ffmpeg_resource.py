@@ -2,6 +2,7 @@ import ffmpeg
 import numpy as np
 
 from common.resources.audio_resource import AudioResource
+import common.utils as utils
 
 
 frame_size_samples = 1024
@@ -45,17 +46,11 @@ class FFMPEGResource(AudioResource):
 				break
 
 			rms = np.sqrt(np.mean(samples**2))
-			db = self.rms_to_db(rms)
+			db = utils.linear_to_db(rms)
 
 			self.volumes.append(db)
 
 		process.wait()
-	
-	def rms_to_db(self, rms):
-		if rms <= 1e-12:
-			return -120.0
-		
-		return 20.0 * np.log10(rms)
 
 	def get_volume(self, frame_position):
 		return self.volumes[frame_position]

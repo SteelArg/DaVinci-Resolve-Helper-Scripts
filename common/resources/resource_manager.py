@@ -1,7 +1,9 @@
 from common.resources.ffmpeg_resource import FFMPEGResource
+from common.resources.timeline_resource import TimelineResource
 
 class ResourceManager:
-	def __init__(self):
+	def __init__(self, project):
+		self.project = project
 		self.resources = {}
 
 	def get_resource(self, media_item):
@@ -13,6 +15,7 @@ class ResourceManager:
 		return self.resources[media_item.GetMediaId()]
 
 	def _load_resource(self, media_item):
-		resource = FFMPEGResource(media_item)
-
-		return resource
+		if media_item.GetClipProperty("Type") == "Timeline":
+			return TimelineResource(media_item, self.project, self)
+		else:
+			return FFMPEGResource(media_item)
