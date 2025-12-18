@@ -21,8 +21,11 @@ items = timeline.GetItemListInTrack("audio", 1)
 item = items[0]
 media_item = item.GetMediaPoolItem()
 resource = resource_manager.get_resource(media_item)
-print(resource.get_volume(24))
+
+log_item(item, "Timeline Item")
+print(resource.get_volume(11))
+print(resource.get_volume(758))
 
 # Cut out silence
-#silence_cutter.set_settings_from_item(item, )
-#silence_cutter.cut_silence(item)
+silence_cutter.set_settings_from_item(item)
+silence_cutter.cut_silence(item)

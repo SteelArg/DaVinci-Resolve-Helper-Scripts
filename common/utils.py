@@ -20,6 +20,23 @@ def get_all_item_from_timeline(timeline):
 				all_items.append(item)
 	return all_items
 
+def timeline_timecode_to_frame(timecode: str, fps: float) -> float:
+	values = timecode.split(":")
+	int_values = []
+	for value in values:
+		int_values.append(int(value))
+	
+	frames = int_values[3]
+	seconds = int_values[2]
+	minutes = int_values[1]
+	hours = int_values[0]
+
+	total_seconds = seconds + minutes * 60 + hours * 3600
+
+	total_frame = frames + float(total_seconds) * fps
+
+	return total_frame
+
 def db_to_linear(db_value: float) -> float:
     return 10 ** (db_value / 20.0)
 

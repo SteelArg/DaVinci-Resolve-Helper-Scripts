@@ -8,12 +8,17 @@ class TimelineResource(AudioResource):
         self.media_item = media_item
         self.resource_manager = resource_manager
 
+        self.frame_rate = float(media_item.GetClipProperty("FPS"))
+
         self.update_timeline_info()
 
     def get_volume(self, frame_position):
+        frame_position += self.start_frame
         audio_clips = self._get_audio_clips_at_position(frame_position)
         total_linear_volume = 0
+        print(frame_position)
         for audio_clip in audio_clips:
+            #print("Audio Clip in Timeline : " + audio_clip)
             volume = self._get_audio_clip_volume(audio_clip, frame_position)
             linear_volume = utils.db_to_linear(volume)
             total_linear_volume += linear_volume
@@ -32,12 +37,17 @@ class TimelineResource(AudioResource):
         prev_timeline = self.project.GetCurrentTimeline()
         self.project.SetCurrentTimeline(self.timeline)
 
+        self.start_frame = int(utils.timeline_timecode_to_frame(self.timeline.GetStartTimecode(), self.frame_rate))
+        print(f"Start frame : {self.start_frame}")
+
+        # Get all items
         items = utils.get_all_item_from_timeline(self.timeline)
         audio_items = []
         for item in items:
             track_type, _ = item.GetTrackTypeAndIndex()
             if track_type == "audio":
                 audio_items.append(item)
+                log_item(item)
 
         self.audio_clips = []
         for audio_item in items:

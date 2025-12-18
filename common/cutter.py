@@ -47,10 +47,7 @@ class Cutter(ResolveCommand):
 		# Compute positions and data
 
 		start_position = item.GetStart(True)
-		end_position = item.GetEnd(True)
 		split_position = int(split_position)
-
-		split_percentage = (split_position-start_position) / (end_position-start_position)
 
 		source_start = item.GetSourceStartFrame()
 		source_end = item.GetSourceEndFrame()
