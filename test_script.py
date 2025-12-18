@@ -3,15 +3,16 @@ from common.gaps_deleter import GapsDeleter
 from common.resources.resource_manager import ResourceManager
 from common.silence_cutter import SilenceCutter
 
+from common.logs import log_item
+
 # Setup DaVinci Resolve
 resolve = app.GetResolve()
 project_manager = resolve.GetProjectManager()
 project = project_manager.GetCurrentProject()
+media_pool = project.GetMediaPool()
 timeline = project.GetCurrentTimeline()
 
 # Setup DR Commands
-cutter = Cutter(resolve)
-gaps_deleter = GapsDeleter(resolve)
 resource_manager = ResourceManager()
 silence_cutter = SilenceCutter(resolve, resource_manager)
 
@@ -21,5 +22,5 @@ item = items[0]
 media_item = item.GetMediaPoolItem()
 
 # Cut out silence
-silence_cutter.set_settings_from_item(item, )
-silence_cutter.cut_silence(item)
+silence_cutter.set_settings_from_item(item)
+new_items = silence_cutter.cut_silence(item)

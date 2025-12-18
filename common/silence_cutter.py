@@ -24,7 +24,7 @@ class SilenceCutter(ResolveCommand):
 		self.silence_enter_span = data[settings.silence_cutter_silence_enter_span]
 		self.silence_exit_span = data[settings.silence_cutter_silence_exit_span]
 
-	def set_settings_from_item(self, item, duration=72, threshold_percentage=0.45):
+	def set_settings_from_item(self, item, duration=24*10, threshold_percentage=0.45):
 		resource = self.resource_manager.get_resource(item.GetMediaPoolItem())
 		source_start_frame = item.GetSourceStartFrame()
 		max_volume = -120
@@ -40,15 +40,15 @@ class SilenceCutter(ResolveCommand):
 
 		print(f"Cut Out Silence Threshold: {self.threshold} db")
 
-	def cut_silence(self, item):
+	def cut_silence(self, audio_item):
 		total_log_timer = LogTimer("Cut Out Silence")
 
 		# Get volume data
 		volume_data = []
-		duration = item.GetDuration(False)
+		duration = audio_item.GetDuration(False)
 		position = 0
 		while position < duration:
-			volume = self.get_item_volume(item, position)
+			volume = self.get_item_volume(audio_item, position)
 			volume_data.append([position, volume])
 
 			position += self.interval
@@ -84,22 +84,24 @@ class SilenceCutter(ResolveCommand):
 		total_log_timer.timestamp()
 
 		# Cut
-		offset = item.GetStart(False)
+		offset = audio_item.GetStart(False)
+		duration = audio_item.GetDuration(False)
 		offseted_cuts = []
 		cutted_items = []
 		for cut in cuts:
-			if cut == 0.0:
+			if cut == 0.0 or cut == duration:
 				continue
-			offseted_cuts.append(cut + offset)
+			offseted_cuts.append(int(cut + offset))
 		
-		cutted_items = self.batch_cutter.cut_batch(item, offseted_cuts)
+		cutted_items = self.batch_cutter.cut_batch(audio_item, offseted_cuts)
 
 		# Delete
 		cut_current_item = starts_with_silence
 		items_to_delete = []
 		for cutted_item in copy.copy(cutted_items):
 			if cut_current_item:
-				items_to_delete.append(cutted_item)
+				for item_to_delete in cutted_item:
+					items_to_delete.append(item_to_delete)
 				cutted_items.remove(cutted_item)
 			
 			cut_current_item = not cut_current_item

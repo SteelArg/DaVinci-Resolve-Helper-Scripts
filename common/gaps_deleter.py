@@ -3,7 +3,6 @@ import copy
 from common.resolve_command import ResolveCommand
 from common.item_adder import ItemAdder
 import common.utils as utils
-from common.logs import *
 
 
 class GapsDeleter(ResolveCommand):
@@ -16,7 +15,7 @@ class GapsDeleter(ResolveCommand):
 
 		# Wrapper around __delete_gaps_internal() to handle linked items
 
-		linked_items = utils.LinkedItems(items)
+		linked_items = utils.LinkedItems(items, self.timeline)
 		all_items = linked_items.all_items
 
 		linked_items.set_all_items_linked(False)
@@ -52,7 +51,6 @@ class GapsDeleter(ResolveCommand):
 
 		# No gaps
 		if (item_locations.__len__() < 2):
-			print("no gaps")
 			return items
 
 		# Calculate gaps
@@ -65,8 +63,6 @@ class GapsDeleter(ResolveCommand):
 			gap.append(gap[1]-gap[0])
 			
 			gaps.append(gap)
-
-		print("gaps: " + str(gaps))
 
 		# Move each item
 		moved_items = []
@@ -89,20 +85,12 @@ class GapsDeleter(ResolveCommand):
 			(track_type, track) = item.GetTrackTypeAndIndex()
 			media_type = utils.track_type_to_media_type(track_type)
 
-			log_thick_line()
-
-			log_item(item, f"#{i} Original")
-
 			self.timeline.DeleteClips([item])
 
 			moved_item = self.item_adder.add_item(
 					resource, source_location[0], source_location[1],
 					track, start_position - gap_distance, media_type
 				)
-
-			log_line()
-
-			log_item(moved_item, f"#{i} Moved")
 
 			moved_items.append(moved_item)
 

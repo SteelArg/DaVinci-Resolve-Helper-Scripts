@@ -9,14 +9,14 @@ def track_type_to_media_type(track_type):
 		case _:
 			return 0
 		
-class LinkedItems:
-	def __init__(self, items):
+class LinkedItems():
+	def __init__(self, items, timeline):
 		self.all_items = copy.copy(items)
 		self.linked_item_index_groups = []
 
-		self.timeline = app.GetResolve().GetProjectManager().GetCurrentProject().GetCurrentTimeline()
+		self.timeline = timeline
 
-		self._calculate_linked_items()
+		self._calculate_linked_items(items)
 
 	def set_all_items_linked(self, value):
 		for linked_item_index_group in self.linked_item_index_groups:
@@ -75,6 +75,9 @@ class LinkedItems:
 	def _calculate_all_items(self, items):
 		self.all_items = copy.copy(items)
 		for item in items:
-			for linked_item in item.GetLinkedItems():
+			linked_items = item.GetLinkedItems()
+			if linked_items is None:
+				continue
+			for linked_item in linked_items:
 				if linked_item not in self.all_items:
 					self.all_items.append(linked_item)

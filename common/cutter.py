@@ -20,7 +20,7 @@ class Cutter(ResolveCommand):
 		return self.cut_group([item], split_position)
 
 	def cut_group(self, items, split_position):
-		linked_items = utils.LinkedItems(items)
+		linked_items = utils.LinkedItems(items, self.timeline)
 		items = linked_items.all_items
 
 		# Handle linked items
@@ -48,10 +48,7 @@ class Cutter(ResolveCommand):
 		# Compute positions and data
 
 		start_position = item.GetStart(True)
-		end_position = item.GetEnd(True)
 		split_position = int(split_position)
-
-		split_percentage = (split_position-start_position) / (end_position-start_position)
 
 		source_start = item.GetSourceStartFrame()
 		source_end = item.GetSourceEndFrame()

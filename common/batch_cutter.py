@@ -1,7 +1,7 @@
 import math
 
 from common.resolve_command import ResolveCommand
-from common.item_adder import ItemAdder
+from common.item_adder import ItemAdder, BatchItemAdder
 import common.utils as utils
 
 
@@ -10,6 +10,7 @@ class BatchCutter(ResolveCommand):
 		super().__init__(resolve)
 
 		self.item_adder = ItemAdder(resolve)
+		self.batch_item_adder = BatchItemAdder(resolve)
 
 	# Pass an TimelineItem and an int frame position
 	# Returns two lists of splitted items that were linked
@@ -17,10 +18,10 @@ class BatchCutter(ResolveCommand):
 	# Wrapper around __cut_internal() to handle linked items
 
 	def cut_batch(self, item, split_positions):
-		self.cut_batch_group(self, [item], split_positions)
+		return self.cut_batch_group([item], split_positions)
 
 	def cut_batch_group(self, items, split_positions):
-		linked_items = utils.LinkedItems(items)
+		linked_items = utils.LinkedItems(items, self.timeline)
 		items = linked_items.all_items
 
 		# Handle linked items
@@ -29,26 +30,25 @@ class BatchCutter(ResolveCommand):
 		cutted_items_rotated = []
 
 		for item in items:
-			result = self.__cut_batch_internal(item, split_positions)
+			self.__cut_batch_internal(item, split_positions)
+			self.timeline.DeleteClips([item])
+			result = self.batch_item_adder.execute()
 			cutted_items_rotated.append(result)
-			
-		self.timeline.DeleteClips(items)
 
-		cutted_items_zipped = zip(cutted_items_rotated)
+		cutted_items_zipped = list(zip(*cutted_items_rotated))
 
 		for cutted_items in cutted_items_zipped:
 			linked_items.set_items(cutted_items)
 			linked_items.set_all_items_linked(True)
 
-		return cutted_items
+		return cutted_items_zipped
 
 	def __cut_batch_internal(self, item, split_positions):
 		resource = item.GetMediaPoolItem()
 
 		# Compute positions and data
 
-		start_position = item.GetStart(True)
-		split_position = int(split_position)
+		start_position = int(item.GetStart(False))
 
 		source_start = item.GetSourceStartFrame()
 		source_end = item.GetSourceEndFrame()
@@ -64,18 +64,18 @@ class BatchCutter(ResolveCommand):
 		(track_type, track) = item.GetTrackTypeAndIndex()
 		media_type = utils.track_type_to_media_type(track_type)
 
-		items = []
+		# Add items to the item adder
+
+		split_positions.insert(0, start_position)
 		prev_source_split = source_start
-		prev_split_position = start_position
 
 		for i in range(source_splits.__len__()):
 			source_split = source_splits[i]
 			split_position = split_positions[i]
 
-			new_item = self.item_adder.add_item(resource, prev_source_split, source_split, track, prev_split_position, media_type)
-			items.append(new_item)
+			if source_split == prev_source_split:
+				continue
+
+			self.batch_item_adder.add_item(resource, prev_source_split, source_split, track, split_position, media_type)
 
 			prev_source_split = source_split
-			prev_split_position = split_position
-
-		return items

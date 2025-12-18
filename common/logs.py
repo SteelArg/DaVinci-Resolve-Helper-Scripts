@@ -10,10 +10,19 @@ def log_thick_line(size=line_size):
 	print("="*size)
 
 def log_item(item, label="Item"):
+	print(item)
+	print(not item is None)
+	print(item.GetMediaPoolItem())
 	print(label)
+
+	media_pool_item = item.GetMediaPoolItem()
+	fps = "ERROR"
+	if media_pool_item:
+		fps = media_pool_item.GetClipProperty('FPS')
+
 	print(f"Location | {item.GetStart()}, {item.GetEnd()}")
 	print(f"Source   | {item.GetSourceStartFrame()}, {item.GetSourceEndFrame()}")
-	print(f"FPS      | {item.GetMediaPoolItem().GetClipProperty('FPS')}")
+	print(f"FPS      | {fps}")
 
 
 class LogTimer:
