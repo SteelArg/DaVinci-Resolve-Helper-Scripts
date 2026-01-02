@@ -10,9 +10,6 @@ def log_thick_line(size=line_size):
 	print("="*size)
 
 def log_item(item, label="Item"):
-	print(item)
-	print(not item is None)
-	print(item.GetMediaPoolItem())
 	print(label)
 
 	media_pool_item = item.GetMediaPoolItem()
