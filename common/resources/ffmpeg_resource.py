@@ -1,5 +1,6 @@
 import ffmpeg
 import numpy as np
+import math
 
 from common.resources.audio_resource import AudioResource
 import common.utils as utils
@@ -16,8 +17,11 @@ class FFMPEGResource(AudioResource):
 		self.load_volume_data()
 
 	def load_volume_data(self):
+		bytes_per_sample = 4
 		sample_rate = 48000
-		chunk_size = int(sample_rate / self.frame_rate)
+		chunk_size_increment = float(sample_rate) / self.frame_rate
+		chunk_size_int = math.floor(chunk_size_increment)
+		chunk_leftover = chunk_size_increment - chunk_size_int
 
 		process = (
 			ffmpeg
@@ -31,13 +35,19 @@ class FFMPEGResource(AudioResource):
 			.run_async(pipe_stdout=True, pipe_stderr=False)
 		)
 
-		bytes_per_sample = 4
-		bytes_per_chunk = chunk_size * bytes_per_sample
-
 		self.volumes = []
 
+		leftover = 0.0
+
 		while True:
-			buf = process.stdout.read(bytes_per_chunk)
+			leftover += chunk_leftover
+			current_chunk_size = chunk_size_int
+			if leftover >= 1.0:
+				leftover_int = math.floor(leftover)
+				current_chunk_size += leftover_int
+				leftover -= leftover_int
+
+			buf = process.stdout.read(current_chunk_size * bytes_per_sample)
 			if not buf:
 				break
 
@@ -50,7 +60,16 @@ class FFMPEGResource(AudioResource):
 
 			self.volumes.append(db)
 
+		self.max_frame = self.volumes.__len__() - 1
+
 		process.wait()
 
-	def get_volume(self, frame_position):
-		return self.volumes[frame_position]
+	def get_volume(self, frame_position: float):
+		frame_index = math.floor(frame_position)
+		
+		if (frame_index > self.max_frame):
+			return utils.linear_to_db(0.0)
+		
+		volume = self.volumes[frame_index]
+
+		return volume

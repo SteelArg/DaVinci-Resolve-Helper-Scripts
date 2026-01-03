@@ -12,7 +12,7 @@ class TimelineResource(AudioResource):
 
         self.update_timeline_info()
 
-    def get_volume(self, frame_position):
+    def get_volume(self, frame_position: float):
         frame_position += self.start_frame
         audio_clips = self._get_audio_clips_at_position(frame_position)
         total_linear_volume = 0
@@ -35,7 +35,7 @@ class TimelineResource(AudioResource):
         prev_timeline = self.project.GetCurrentTimeline()
         self.project.SetCurrentTimeline(self.timeline)
 
-        self.start_frame = int(utils.timeline_timecode_to_frame(self.timeline.GetStartTimecode(), self.frame_rate))
+        self.start_frame = float(utils.timeline_timecode_to_frame(self.timeline.GetStartTimecode(), self.frame_rate))
 
         # Get all items
         items = utils.get_all_item_from_timeline(self.timeline)
@@ -44,14 +44,18 @@ class TimelineResource(AudioResource):
             track_type, _ = item.GetTrackTypeAndIndex()
             if track_type == "audio":
                 audio_items.append(item)
+                log_item(item)
 
         self.audio_clips = []
         for audio_item in items:
-            resource = self.resource_manager.get_resource(audio_item.GetMediaPoolItem())
+            media_item = audio_item.GetMediaPoolItem()
+            resource = self.resource_manager.get_resource(media_item)
             start = audio_item.GetStart(False)
             end = audio_item.GetEnd(False)
             source = audio_item.GetSourceStartFrame()
-            audio_clip = [resource, start, end, source]
+            item_frame_rate = float(media_item.GetClipProperty("FPS"))
+            conversion = item_frame_rate / self.frame_rate
+            audio_clip = [resource, start, end, source, conversion]
             self.audio_clips.append(audio_clip)
 
         self.project.SetCurrentTimeline(prev_timeline)
@@ -64,7 +68,8 @@ class TimelineResource(AudioResource):
         return clips
 
     def _get_audio_clip_volume(self, audio_clip, frame_position):
-        local_frame_position = frame_position - audio_clip[1]
-        source_position = local_frame_position + audio_clip[3]
+        local_timeline_frame_position = frame_position - audio_clip[1]
+        source_offset = local_timeline_frame_position * audio_clip[4]
+        source_position = source_offset + audio_clip[3]
         resource = audio_clip[0]
         return resource.get_volume(source_position)

@@ -20,7 +20,6 @@ silence_cutter = SilenceCutter(resolve, resource_manager)
 items = timeline.GetItemListInTrack("audio", 1)
 item = items[0]
 media_item = item.GetMediaPoolItem()
-resource = resource_manager.get_resource(media_item)
 
 # Cut out silence
 silence_cutter.set_settings_from_item(item)

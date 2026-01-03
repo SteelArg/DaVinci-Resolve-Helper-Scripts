@@ -41,6 +41,9 @@ class SilenceCutter(ResolveCommand):
 		print(f"Cut Out Silence Threshold: {self.threshold} db")
 
 	def cut_silence(self, audio_item):
+		self.item_frame_rate = float(audio_item.GetMediaPoolItem().GetClipProperty("FPS"))
+		self.frame_rate_conversion = self.item_frame_rate / self.frame_rate
+
 		total_log_timer = LogTimer("Cut Out Silence")
 
 		# Get volume data
@@ -114,8 +117,9 @@ class SilenceCutter(ResolveCommand):
 
 		return cutted_items
 
-	def get_item_volume(self, item, local_frame_position):
-		source_frame_position = int(local_frame_position + item.GetSourceStartFrame())
+	def get_item_volume(self, item, timeline_local_frame_position):
+		source_local_frame_position = timeline_local_frame_position * self.frame_rate_conversion
+		source_frame_position = int(source_local_frame_position + item.GetSourceStartFrame())
 		media_item = item.GetMediaPoolItem()
 		resource = self.resource_manager.get_resource(media_item)
 

@@ -6,3 +6,6 @@ class ResolveCommand:
 		self.project = self._project_manager.GetCurrentProject()
 		self.media_pool = self.project.GetMediaPool()
 		self.timeline = self.project.GetCurrentTimeline()
+		self.timeline_media_item = self.timeline.GetMediaPoolItem()
+
+		self.frame_rate = float(self.timeline_media_item.GetClipProperty("FPS"))
