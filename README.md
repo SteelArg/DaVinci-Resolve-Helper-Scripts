@@ -12,6 +12,7 @@ To import them in your python script use the import statement just like in the e
 
 ```from common.cutter import Cutter # Imports a clip cutter```
 ## Features
+* **Audio Silence Cutter**
 * **Clip Cutter**
 * **Gaps Deleter**
 * **Logs**
